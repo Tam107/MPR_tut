@@ -1,10 +1,11 @@
 import React, {createContext, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import HomeScreen from "./screens/HomeScreen";
-import DetailPage from "./screens/DetailPage";
-import {Button} from "react-native";
-import ButtonChange from "./components/ButtonChange";
+// import HomeScreen from "./screens/HomeScreen";
+// import DetailPage from "./screens/DetailPage";
+// import {Button} from "react-native";
+// import ButtonChange from "./components/ButtonChange";
+import TimeTrackingApp from "./screens/TimeTrackingApp";
 
 
 // 🟢 Context must be defined outside the component
@@ -23,24 +24,7 @@ export default function App() {
         <MyContext.Provider value={profile}>
             <NavigationContainer>
                 <Stack.Navigator>
-                    <Stack.Screen
-                        name="Home"
-                        component={HomeScreen}
-                        options={{
-                            title: 'Home', // Static title for the Home screen
-                            headerStyle: {
-                                backgroundColor: '#f4511e', // Set background color
-                            },
-                            headerTintColor: '#fff', // Set header text color
-                            headerTitleStyle: {
-                                fontWeight: 'bold', // Make the title bold
-                            },
-                            headerRight: () => (
-                                <ButtonChange/>)
-                        }}
-                    />
-                    <Stack.Screen name="Detail" component={DetailPage} options={{title: 'Detail'}}/>
-
+                    <Stack.Screen name="TimeTracking" component={TimeTrackingApp} />
                 </Stack.Navigator>
             </NavigationContainer>
         </MyContext.Provider>

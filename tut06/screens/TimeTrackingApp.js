@@ -1,86 +1,81 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, FlatList, TouchableOpacity } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { v4 as uuidv4 } from "uuid";
-
+import React, { useState, useEffect } from 'react';
+import { FlatList, SafeAreaView, View } from 'react-native';
+import tw from 'twrnc';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import EditableTimer from '../components/EditableTimer';
+import ToggleableTimerForm from "../components/ToggleableTimerForm";
 const TimeTrackingApp = () => {
     const [timers, setTimers] = useState([]);
-    const [title, setTitle] = useState("");
-    const [project, setProject] = useState("");
+    const [isFormVisible, setIsFormVisible] = useState(false);
 
     useEffect(() => {
+        // Load timers from AsyncStorage on mount
+        const loadTimers = async () => {
+            try {
+                const storedTimers = await AsyncStorage.getItem('timers');
+                if (storedTimers) setTimers(JSON.parse(storedTimers));
+            } catch (error) {
+                console.error('Error loading timers:', error);
+            }
+        };
         loadTimers();
     }, []);
 
     useEffect(() => {
+        // Save timers to AsyncStorage when they change
+        const saveTimers = async () => {
+            try {
+                await AsyncStorage.setItem('timers', JSON.stringify(timers));
+            } catch (error) {
+                console.error('Error saving timers:', error);
+            }
+        };
         saveTimers();
     }, [timers]);
 
-    const loadTimers = async () => {
-        try {
-            const storedTimers = await AsyncStorage.getItem("timers");
-            if (storedTimers) setTimers(JSON.parse(storedTimers));
-        } catch (error) {
-            console.error("Error loading timers:", error);
-        }
+    const handleCreateTimer = (newTimer) => {
+        setTimers([...timers, {
+            id: Date.now().toString(),
+            title: newTimer.title,
+            project: newTimer.project,
+            elapsed: 0,
+            isRunning: false,
+        }]);
+        setIsFormVisible(false);
     };
 
-    const saveTimers = async () => {
-        try {
-            await AsyncStorage.setItem("timers", JSON.stringify(timers));
-        } catch (error) {
-            console.error("Error saving timers:", error);
-        }
+    const handleUpdateTimer = (updatedTimer) => {
+        setTimers(timers.map(timer =>
+            timer.id === updatedTimer.id ? updatedTimer : timer
+        ));
     };
 
-    const addTimer = () => {
-        if (title.trim() && project.trim()) {
-            setTimers([...timers, { id: uuidv4(), title, project, elapsed: 0, isRunning: false, startTime: null }]);
-            setTitle("");
-            setProject("");
-        }
+    const handleDeleteTimer = (timerId) => {
+        setTimers(timers.filter(timer => timer.id !== timerId));
     };
-
-    const toggleTimer = (id) => {
-        setTimers((prevTimers) =>
-            prevTimers.map((timer) => {
-                if (timer.id === id) {
-                    if (timer.isRunning) {
-                        return { ...timer, isRunning: false, elapsed: timer.elapsed + (Date.now() - timer.startTime) };
-                    } else {
-                        return { ...timer, isRunning: true, startTime: Date.now() };
-                    }
-                }
-                return timer;
-            })
-        );
-    };
-
-    const deleteTimer = (id) => {
-        setTimers(timers.filter((timer) => timer.id !== id));
-    };
-
-    const renderTimer = ({ item }) => (
-        <View style={{ padding: 10, borderBottomWidth: 1 }}>
-            <Text>Title: {item.title}</Text>
-            <Text>Project: {item.project}</Text>
-            <Text>Elapsed Time: {((item.elapsed + (item.isRunning ? Date.now() - item.startTime : 0)) / 1000).toFixed(1)}s</Text>
-            <Button title={item.isRunning ? "Stop" : "Start"} onPress={() => toggleTimer(item.id)} />
-            <Button title="Delete" onPress={() => deleteTimer(item.id)} color="red" />
-        </View>
-    );
 
     return (
-        <View style={{ padding: 20 }}>
-            <TextInput placeholder="Task Title" value={title} onChangeText={setTitle} style={{ borderBottomWidth: 1, marginBottom: 10 }} />
-            <TextInput placeholder="Project Name" value={project} onChangeText={setProject} style={{ borderBottomWidth: 1, marginBottom: 10 }} />
-            <Button title="Add Timer" onPress={addTimer} />
-            <FlatList data={timers} keyExtractor={(item) => item.id} renderItem={renderTimer} />
-        </View>
+        <SafeAreaView style={tw`flex-1 p-4 bg-gray-100`}>
+            <FlatList
+                data={timers}
+                renderItem={({ item }) => (
+                    <EditableTimer
+                        timer={item}
+                        onUpdate={handleUpdateTimer}
+                        onDelete={handleDeleteTimer}
+                    />
+                )}
+                keyExtractor={item => item.id}
+                ListFooterComponent={
+                    <ToggleableTimerForm
+                        isVisible={isFormVisible}
+                        onToggle={() => setIsFormVisible(!isFormVisible)}
+                        onSubmit={handleCreateTimer}
+                    />
+                }
+            />
+        </SafeAreaView>
     );
 };
 
 export default TimeTrackingApp;
-
-
-
